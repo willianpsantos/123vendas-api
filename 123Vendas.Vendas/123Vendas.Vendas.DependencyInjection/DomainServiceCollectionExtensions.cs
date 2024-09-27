@@ -2,14 +2,17 @@
 using _123Vendas.Vendas.DB;
 using _123Vendas.Vendas.Domain;
 using _123Vendas.Vendas.Domain.Adapters;
+using _123Vendas.Vendas.Domain.Events;
 using _123Vendas.Vendas.Domain.Interfaces.Base;
 using _123Vendas.Vendas.Domain.Interfaces.Services;
 using _123Vendas.Vendas.Domain.Models;
 using _123Vendas.Vendas.Domain.Queries;
 using _123Vendas.Vendas.Domain.Validators;
+using _123Vendas.Vendas.Events;
 using _123Vendas.Vendas.Repositories;
 using _123Vendas.Vendas.Services;
 using FluentValidation;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -70,6 +73,33 @@ namespace _123Vendas.Vendas.DependencyInjection
             return services
                 .AddScoped<IValidator<InsertOrUpdateSaleModel>, InsertOrUpdaSaleModelValidator>()
                 .AddScoped<IValidator<InsertOrUpdateSaleProductModel>, InsertOrUpdateSaleProductModelValidator>();
+        }
+
+        public static IServiceCollection AddMassTransitForDomainEvents(this IServiceCollection services, IConfiguration configuration)
+        {
+            var messageBrokerConfiguration = configuration.GetSection(ApplicationConstants.MessageBrokerConfiguratioSectionName);
+
+            return services.AddMassTransit(options =>
+            {
+                options.AddConsumer<SaleCanceledEventConsumer>();
+                options.AddConsumer<SaleCreatedEventConsumer>();
+                options.AddConsumer<SaleUpdatedEventConsumer>();
+
+                options.UsingRabbitMq((context, cfg) =>
+                {
+                    var host = messageBrokerConfiguration.GetValue<string>("Host");
+                    var port = messageBrokerConfiguration.GetValue<ushort>("Port");
+                    var username = messageBrokerConfiguration.GetValue<string>("Username");
+                    var password = messageBrokerConfiguration.GetValue<string>("Password");
+
+                    cfg.Host(host, port, "/", h => {
+                        h.Username(username);
+                        h.Password(password);
+                    });
+
+                    cfg.ConfigureEndpoints(context);
+                });
+            });
         }
     }
 }

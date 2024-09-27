@@ -14,7 +14,8 @@ builder
     .AddDomainSqlServerDbContext(builder.Configuration)
     .AddDomainRepositories()
     .AddDomainQueryToExpressionAdapters()
-    .AddDomainServices();
+    .AddDomainServices()
+    .AddMassTransitForDomainEvents(builder.Configuration);
 
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)

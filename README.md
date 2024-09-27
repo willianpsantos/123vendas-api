@@ -1,6 +1,11 @@
 # 123vendas-api
 API to manipulate sales information.
 
+Dependencies:
+    * Docker
+    * SQL Server
+    * RabbitMQ
+
 [1] Create databases
 
 a. In your SQL server instance, create a database called 123vendas (feel free to choose some other name)
@@ -25,3 +30,10 @@ e. Find the "Serilog" section.
 f. Into "Serilog" section, localize "WriteTo" section, and then a configuration with name "MSSqlServer".
 g. Into "MSSqlServer" section, find "connectionString" key.
 h. Put yor serilog database connection string in there.
+
+[4] Set up your RabbitMQ settings
+
+a. Go to project 123Vendas.Vendas.API.
+b. Go to appsettings.json file.
+c. In the appsettings.json file, find the "MessageBroker" section. 
+d. Put your RabbitMQ host into "Host" key, your rabbitmq username in "Username" key and you rabbitmq password in "Password" key

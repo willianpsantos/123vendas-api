@@ -7,17 +7,19 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "123Vendas.Vendas.API", "123
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "123Vendas.Vendas.Data", "123Vendas.Vendas.Data\123Vendas.Vendas.Data.csproj", "{343A89CF-CDC7-4FDB-A449-557865784137}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "123Vendas.Vendas.DB", "123Vendas.Vendas.DB\123Vendas.Vendas.DB.csproj", "{8027F598-7A3D-4680-90A2-7DAFC5405389}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "123Vendas.Vendas.DB", "123Vendas.Vendas.DB\123Vendas.Vendas.DB.csproj", "{8027F598-7A3D-4680-90A2-7DAFC5405389}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "123Vendas.Vendas.Domain", "123Vendas.Vendas.Domain\123Vendas.Vendas.Domain.csproj", "{2089DDE3-A094-4BFA-802B-F3B2F98171B1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "123Vendas.Vendas.Domain", "123Vendas.Vendas.Domain\123Vendas.Vendas.Domain.csproj", "{2089DDE3-A094-4BFA-802B-F3B2F98171B1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "123Vendas.Vendas.Repositories", "123Vendas.Vendas.Repositories\123Vendas.Vendas.Repositories.csproj", "{BD17FEC8-5BB6-46BB-982B-32BB816BCAC7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "123Vendas.Vendas.Repositories", "123Vendas.Vendas.Repositories\123Vendas.Vendas.Repositories.csproj", "{BD17FEC8-5BB6-46BB-982B-32BB816BCAC7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "123Vendas.Vendas.Services", "123Vendas.Vendas.Services\123Vendas.Vendas.Services.csproj", "{16E92336-CF58-4EA5-AACB-03FDDF4F1BEB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "123Vendas.Vendas.Services", "123Vendas.Vendas.Services\123Vendas.Vendas.Services.csproj", "{16E92336-CF58-4EA5-AACB-03FDDF4F1BEB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "123Vendas.Vendas.DependencyInjection", "123Vendas.Vendas.DependencyInjection\123Vendas.Vendas.DependencyInjection.csproj", "{BF8EEF50-D08A-463F-BD42-0FD3A2C3CE02}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "123Vendas.Vendas.DependencyInjection", "123Vendas.Vendas.DependencyInjection\123Vendas.Vendas.DependencyInjection.csproj", "{BF8EEF50-D08A-463F-BD42-0FD3A2C3CE02}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "123Vendas.Vendas.Tests", "123Vendas.Vendas.Tests\123Vendas.Vendas.Tests.csproj", "{721954CA-6B82-4E2D-A4BD-E8AB9F4A30FD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "123Vendas.Vendas.Tests", "123Vendas.Vendas.Tests\123Vendas.Vendas.Tests.csproj", "{721954CA-6B82-4E2D-A4BD-E8AB9F4A30FD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "123Vendas.Vendas.Events", "123Vendas.Vendas.Events\123Vendas.Vendas.Events.csproj", "{DB092C70-5613-453D-9074-AD91346044E4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -57,6 +59,10 @@ Global
 		{721954CA-6B82-4E2D-A4BD-E8AB9F4A30FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{721954CA-6B82-4E2D-A4BD-E8AB9F4A30FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{721954CA-6B82-4E2D-A4BD-E8AB9F4A30FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DB092C70-5613-453D-9074-AD91346044E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DB092C70-5613-453D-9074-AD91346044E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DB092C70-5613-453D-9074-AD91346044E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DB092C70-5613-453D-9074-AD91346044E4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

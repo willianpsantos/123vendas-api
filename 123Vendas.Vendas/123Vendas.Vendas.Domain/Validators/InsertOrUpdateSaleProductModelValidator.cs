@@ -7,7 +7,6 @@ namespace _123Vendas.Vendas.Domain.Validators
     {
         public InsertOrUpdateSaleProductModelValidator()
         {
-            RuleFor(x => x.Total).GreaterThan(0);
             RuleFor(x => x.Amount).GreaterThan(0);
             RuleFor(x => x.Quantity).GreaterThan(0);
             RuleFor(x => x.ProductId).NotEmpty().NotEqual(Guid.Empty);

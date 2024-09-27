@@ -37,8 +37,7 @@ namespace _123Vendas.Vendas.Services
                     SaleId = _.SaleId,
                     Amount = _.Amount?.Amount ?? 0,
                     Discount = _.Amount?.Discount ?? 0,
-                    Quantity = _.Amount?.Quantity ?? 0,
-                    Total = _.Amount?.Total ?? 0
+                    Quantity = _.Amount?.Quantity ?? 0
                 })?.ToArray() ?? Enumerable.Empty<InsertOrUpdateSaleProductModel>()
             };
 
