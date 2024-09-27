@@ -49,11 +49,6 @@ namespace _123Vendas.Vendas.DependencyInjection
 
             dependenciesHandler?.Invoke(serviceCollection);
 
-            //serviceCollection
-            //    .AddDomainDbContext(_configuration)
-            //    .AddDomainRepositories()
-            //    .AddDomainServices();
-
             _serviceProvider = serviceCollection.BuildServiceProvider();            
         }        
 
