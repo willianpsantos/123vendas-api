@@ -1,10 +1,15 @@
 ﻿using _123Vendas.Vendas.Data.Entities;
 using _123Vendas.Vendas.DB;
 using _123Vendas.Vendas.Domain;
-using _123Vendas.Vendas.Domain.Interfaces;
+using _123Vendas.Vendas.Domain.Adapters;
+using _123Vendas.Vendas.Domain.Interfaces.Base;
+using _123Vendas.Vendas.Domain.Interfaces.Services;
 using _123Vendas.Vendas.Domain.Models;
+using _123Vendas.Vendas.Domain.Queries;
+using _123Vendas.Vendas.Domain.Validators;
 using _123Vendas.Vendas.Repositories;
 using _123Vendas.Vendas.Services;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -72,6 +77,12 @@ namespace _123Vendas.Vendas.DependencyInjection
             });
         }
 
+        public static IServiceCollection AddDomainQueryToExpressionAdapters(this IServiceCollection services)
+        {
+            return services
+                .AddScoped<IQueryToExpressionAdapter<SaleQuery, Sale>, SaleQueryToExpressionAdapter>();
+        }
+
         public static IServiceCollection AddDomainRepositories(this IServiceCollection services)
         {
             return services
@@ -82,7 +93,14 @@ namespace _123Vendas.Vendas.DependencyInjection
         public static IServiceCollection AddDomainServices(this IServiceCollection services)
         {
             return services
-                .AddScoped<IDomainService<SaleModel>, SaleService>();
+                .AddScoped<ISaleService, SaleService>();
+        }
+
+        public static IServiceCollection AddDomainModelValidators(this IServiceCollection services)
+        {
+            return services
+                .AddScoped<IValidator<InsertOrUpdateSaleModel>, InsertOrUpdaSaleModelValidator>()
+                .AddScoped<IValidator<InsertOrUpdateSaleProductModel>, InsertOrUpdateSaleProductModelValidator>();
         }
     }
 }

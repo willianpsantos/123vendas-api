@@ -1,6 +1,6 @@
 ﻿using _123Vendas.Vendas.Data.Entities;
 using _123Vendas.Vendas.DB;
-using _123Vendas.Vendas.Domain.Interfaces;
+using _123Vendas.Vendas.Domain.Interfaces.Base;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -15,24 +15,29 @@ namespace _123Vendas.Vendas.Repositories
 
         public async ValueTask<int> CountAsync(Expression<Func<SaleProduct, bool>>? query = default)
         {
-            IQueryable<SaleProduct>? queryable = _context.SaleProducts;
-
-            if (query is not null)
-                queryable = queryable.Where(query);
+            IQueryable<SaleProduct>? queryable =
+                 (query is null)
+                     ? _context.SaleProducts.Where(_ => !_.IsDeleted)
+                     : _context.SaleProducts.Where(query);
 
             return await queryable.CountAsync();
         }
 
-
         public async IAsyncEnumerable<SaleProduct> GetAsync(Expression<Func<SaleProduct, bool>>? query = null, int page = 0, int pageSize = 0)
         {
-            IQueryable<SaleProduct>? queryable = _context.SaleProducts;
-
-            if (query is not null)
-                queryable = queryable.Where(query);
+            IQueryable<SaleProduct>? queryable =
+                 (query is null)
+                     ? _context.SaleProducts.Where(_ => !_.IsDeleted)
+                     : _context.SaleProducts.Where(query);
 
             if (page > 0 && pageSize > 0)
-                queryable = queryable.Skip((page - 1) * pageSize).Take(pageSize);
+            {
+                queryable =
+                    queryable
+                        .OrderByDescending(_ => _.IncludedAt)
+                        .Skip((page - 1) * pageSize)
+                        .Take(pageSize);
+            }
 
             await foreach (var item in queryable.AsNoTracking().AsAsyncEnumerable())
                 yield return item;
@@ -110,6 +115,30 @@ namespace _123Vendas.Vendas.Repositories
                 await _context.SaveChangesAsync();
 
             return deleted;
+        }
+
+        public async ValueTask<bool> CancelAsync(Guid id, Guid canceledBy)
+        {
+            var affected = await _context
+                .SaleProducts
+                .Where(_ => _.Id == id)
+                .ExecuteUpdateAsync(
+                    _ => _.SetProperty(_ => _.Canceled, true)
+                          .SetProperty(_ => _.CanceledAt, DateTimeOffset.UtcNow)
+                          .SetProperty(_ => _.CanceledBy, canceledBy)
+                );
+
+            return affected > 0;
+        }
+
+        public async ValueTask<bool> CancelAndSaveChangesAsync(Guid id, Guid canceledBy)
+        {
+            var canceled = await CancelAsync(id, canceledBy);
+
+            if (canceled)
+                await _context.SaveChangesAsync();
+
+            return canceled;
         }
 
         public async ValueTask<int> SaveChangesAsync() => await _context.SaveChangesAsync();

@@ -1,6 +1,6 @@
 using _123Vendas.Vendas.Data.Entities;
 using _123Vendas.Vendas.DependencyInjection;
-using _123Vendas.Vendas.Domain.Interfaces;
+using _123Vendas.Vendas.Domain.Interfaces.Base;
 using NUnit.Framework.Legacy;
 
 namespace _123Vendas.Vendas.Tests

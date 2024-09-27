@@ -1,6 +1,6 @@
 ﻿using System.Linq.Expressions;
 
-namespace _123Vendas.Vendas.Domain.Interfaces
+namespace _123Vendas.Vendas.Domain.Interfaces.Base
 {
     public interface IRepository<TEntity> where TEntity : class
     {
@@ -8,13 +8,15 @@ namespace _123Vendas.Vendas.Domain.Interfaces
 
         IAsyncEnumerable<TEntity> GetAsync(Expression<Func<TEntity, bool>>? query = default, int page = 0, int pageSize = 0);
         ValueTask<TEntity?> GetByIdAsync(Guid id);
-        
+
         ValueTask<TEntity> InsertAsync(TEntity entity, Guid insertedBy);
         ValueTask<TEntity> InsertAndSaveChangesAsync(TEntity entity, Guid insertedBy);
         TEntity Update(TEntity entity, Guid updatedBy);
         ValueTask<TEntity> UpdateAndSaveChangesAsync(TEntity entity, Guid updatedBy);
         ValueTask<bool> DeleteAsync(Guid id, Guid deletedBy);
         ValueTask<bool> DeleteAndSaveChangesAsync(Guid id, Guid deletedBy);
+        ValueTask<bool> CancelAsync(Guid id, Guid canceledBy);
+        ValueTask<bool> CancelAndSaveChangesAsync(Guid id, Guid canceledBy);
         ValueTask<int> SaveChangesAsync();
     }
 }

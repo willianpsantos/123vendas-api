@@ -1,9 +1,7 @@
-﻿using _123Vendas.Vendas.Data.Base;
-using _123Vendas.Vendas.Data.Entities;
+﻿using _123Vendas.Vendas.Data.Entities;
 using _123Vendas.Vendas.DB;
-using _123Vendas.Vendas.Domain.Interfaces;
+using _123Vendas.Vendas.Domain.Interfaces.Base;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using System.Linq.Expressions;
 
 namespace _123Vendas.Vendas.Repositories
@@ -16,20 +14,20 @@ namespace _123Vendas.Vendas.Repositories
 
         public async ValueTask<int> CountAsync(Expression<Func<Sale, bool>>? query = default)
         {
-            IQueryable<Sale>? queryable = _context.Sales.Include(_ => _.Products);
-
-            if (query is not null)
-                queryable = queryable.Where(query);
-
+            IQueryable<Sale>? queryable =
+                (query is null)
+                    ? _context.Sales.Include(_ => _.Products).Where(_ => !_.IsDeleted)
+                    : _context.Sales.Include(_ => _.Products).Where(query);
+            
             return await queryable.CountAsync();
         }
 
         public async IAsyncEnumerable<Sale> GetAsync(Expression<Func<Sale, bool>>? query = null, int page = 0, int pageSize = 0)
         {
-            IQueryable<Sale>? queryable = _context.Sales.Include(_ => _.Products);
-
-            if (query is not null)
-                queryable = queryable.Where(query);
+            IQueryable<Sale>? queryable =
+                (query is null)
+                    ? _context.Sales.Include(_ => _.Products).Where(_ => !_.IsDeleted)
+                    : _context.Sales.Include(_ => _.Products).Where(query);
 
             if (page > 0 && pageSize > 0)
             {
@@ -114,7 +112,16 @@ namespace _123Vendas.Vendas.Repositories
                 entity.Total = entity.Products.Where(_ => !_.IsDeleted).Sum(_ => _.Amount?.Total ?? 0);
             }
 
-            _context.Entry(entity).State = EntityState.Modified;
+            var trackedEntities = 
+                _context
+                    .ChangeTracker
+                    .Entries<Sale>()?
+                    .FirstOrDefault(_ => _.Entity?.Id == entity.Id);
+
+            if (trackedEntities is null)
+                _context.Entry(entity).State = EntityState.Modified;
+            else
+                trackedEntities.CurrentValues.SetValues(entity);
 
             return entity;
         }
@@ -150,6 +157,31 @@ namespace _123Vendas.Vendas.Repositories
                 await _context.SaveChangesAsync();
 
             return deleted;
+        }
+
+        public async ValueTask<bool> CancelAsync(Guid id, Guid canceledBy)
+        {
+            var affected = await _context
+                .Sales
+                .Where(_ => _.Id == id)
+                .ExecuteUpdateAsync(
+                    _ => _.SetProperty(_ => _.Canceled, true)
+                          .SetProperty(_ => _.CanceledAt, DateTimeOffset.UtcNow)
+                          .SetProperty(_ => _.CanceledBy, canceledBy)
+                );
+
+            return affected > 0;
+        }
+
+        public async ValueTask<bool> CancelAndSaveChangesAsync(Guid id, Guid canceledBy)
+        {
+            var canceled = await CancelAsync(id, canceledBy);
+
+            if (canceled)
+                await _context.SaveChangesAsync();
+
+            return canceled;
+
         }
 
         public async ValueTask<int> SaveChangesAsync() => await _context.SaveChangesAsync();

@@ -1,6 +1,6 @@
 ﻿namespace _123Vendas.Vendas.Domain.Models
 {
-    public class SaleProductModel
+    public class InsertOrUpdateSaleProductModel
     {
         public Guid? Id { get; set; }
         public Guid SaleId { get; set; }
@@ -9,9 +9,5 @@
         public decimal Amount { get; set; }
         public decimal Discount { get; set; }
         public decimal Total { get; set; }
-
-        public bool? Canceled { get; set; }
-        public DateTimeOffset? CanceledAt { get; set; }
-        public Guid? CanceledBy { get; set; }
     }
 }

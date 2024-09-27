@@ -1,5 +1,5 @@
 ﻿using _123Vendas.Vendas.Data.Entities;
-using _123Vendas.Vendas.Domain.Interfaces;
+using _123Vendas.Vendas.Domain.Interfaces.Base;
 using _123Vendas.Vendas.Domain.Queries;
 using System.Linq.Expressions;
 
