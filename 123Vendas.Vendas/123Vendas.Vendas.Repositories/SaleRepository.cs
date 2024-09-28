@@ -2,6 +2,7 @@
 using _123Vendas.Vendas.DB;
 using _123Vendas.Vendas.Domain.Interfaces.Base;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System.Linq.Expressions;
 
 namespace _123Vendas.Vendas.Repositories
@@ -26,8 +27,8 @@ namespace _123Vendas.Vendas.Repositories
         {
             IQueryable<Sale>? queryable =
                 (query is null)
-                    ? _context.Sales.Include(_ => _.Products).Where(_ => !_.IsDeleted)
-                    : _context.Sales.Include(_ => _.Products).Where(query);
+                    ? _context.Sales.Include(_ => _.Products!.Where(p => !p.IsDeleted)).Where(_ => !_.IsDeleted)
+                    : _context.Sales.Include(_ => _.Products!.Where(p => !p.IsDeleted)).Where(query);
 
             if (page > 0 && pageSize > 0)
             {
@@ -45,12 +46,15 @@ namespace _123Vendas.Vendas.Repositories
         public async ValueTask<Sale?> GetByIdAsync(Guid id) => await 
             _context
                 .Sales
-                .Include(_ => _.Products)
+                .Include(_ => _.Products!.Where(p => !p.IsDeleted))
                 .AsNoTracking()
                 .FirstOrDefaultAsync(_ => _.Id == id);
 
         public async ValueTask<Sale> InsertAsync(Sale entity, Guid insertedBy)
         {
+            if (entity.Products is null or { Count: 0 })
+                throw new InvalidOperationException("Entity has no products");
+
             if (entity.Id == Guid.Empty)
                 entity.Id = Guid.NewGuid();
 
@@ -89,39 +93,70 @@ namespace _123Vendas.Vendas.Repositories
             if (entity.Id == Guid.Empty)
                 throw new InvalidOperationException("Entity has no ID");
 
+            if (entity.Products is null or { Count: 0 })
+                throw new InvalidOperationException("Entity has no products");
+
             entity.UpdatedAt = DateTimeOffset.UtcNow;
             entity.UpdatedBy = updatedBy;
+
+            var trackedSale =
+               _context
+                   .ChangeTracker
+                   .Entries<Sale>()?
+                   .FirstOrDefault(_ => _.Entity?.Id == entity.Id);
+
+            var trackedProducts =
+                _context
+                   .ChangeTracker
+                   .Entries<SaleProduct>()?
+                   .Where(_ => _.Entity?.SaleId == entity.Id)?
+                   .ToArray();
 
             if (entity.Products is not null && entity.Products.Count > 0)
             {
                 foreach (var prod in entity.Products)
                 {
-                    if (prod.Id != Guid.Empty)
+                    var inserting = prod.Id == Guid.Empty || prod.IncludedAt is null;                    
+
+                    if (inserting)
+                    {
+                        prod.Id = prod.Id == Guid.Empty ? Guid.NewGuid() : prod.Id;
+                        prod.IncludedAt = entity.UpdatedAt;
+                        prod.IncludedBy = updatedBy;
+
+                        continue;
+                    }
+
+                    if(prod.IsDeleted)
+                    {
+                        prod.DeletedAt = entity.UpdatedAt;
+                        prod.DeletedBy = entity.DeletedBy;
+                    }
+                    else
                     {
                         prod.UpdatedAt = entity.UpdatedAt;
                         prod.UpdatedBy = updatedBy;
                     }
+
+                    EntityEntry<SaleProduct>? trackedProd = trackedProducts?.FirstOrDefault(p => p.Entity.Id == prod.Id);
+
+                    if (trackedProd is null)
+                        _context.Entry(prod).State = EntityState.Modified;
                     else
-                    {
-                        prod.Id = Guid.NewGuid();
-                        prod.IncludedAt = entity.UpdatedAt;
-                        prod.IncludedBy = updatedBy;
-                    }
+                        trackedProd.CurrentValues.SetValues(prod);
                 }
 
-                entity.Total = entity.Products.Where(_ => !_.IsDeleted).Sum(_ => _.Amount?.Total ?? 0);
+                entity.Total = 
+                    entity
+                        .Products
+                        .Where(_ => !_.IsDeleted)
+                        .Sum(_ => _.Amount?.Total ?? 0);
             }
 
-            var trackedEntities = 
-                _context
-                    .ChangeTracker
-                    .Entries<Sale>()?
-                    .FirstOrDefault(_ => _.Entity?.Id == entity.Id);
-
-            if (trackedEntities is null)
+            if (trackedSale is null)
                 _context.Entry(entity).State = EntityState.Modified;
             else
-                trackedEntities.CurrentValues.SetValues(entity);
+                trackedSale.CurrentValues.SetValues(entity);
 
             return entity;
         }

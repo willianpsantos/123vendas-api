@@ -30,7 +30,7 @@ namespace _123Vendas.Vendas.Events
                 SaleDate = @event.SaleDate,
                 SalerId = @event.SalerId,
 
-                Products = @event.Products?.Select(_ => new InsertOrUpdateSaleProductModel
+                Products = @event.Products?.Select(_ => new InsertUpdateOrDeleteSaleProductModel
                 {
                     Id = _.Id ?? Guid.Empty,
                     SaleId = @event.Id,
@@ -38,7 +38,8 @@ namespace _123Vendas.Vendas.Events
                     Discount = _.Discount,
                     ProductId = _.ProductId,
                     Quantity = _.Quantity
-                })
+                })?
+                .ToHashSet()
             };
 
         public async Task Consume(ConsumeContext<SaleUpdatedEvent> context)

@@ -1,7 +1,7 @@
 ﻿using _123Vendas.Vendas.Data.Entities;
 using _123Vendas.Vendas.DB;
 using _123Vendas.Vendas.Domain;
-using _123Vendas.Vendas.Domain.Adapters;
+using _123Vendas.Vendas.Domain.QueryAdapters;
 using _123Vendas.Vendas.Domain.Events;
 using _123Vendas.Vendas.Domain.Interfaces.Base;
 using _123Vendas.Vendas.Domain.Interfaces.Services;
@@ -58,8 +58,7 @@ namespace _123Vendas.Vendas.DependencyInjection
         public static IServiceCollection AddDomainRepositories(this IServiceCollection services)
         {
             return services
-                .AddScoped<IRepository<Sale>, SaleRepository>()
-                .AddScoped<IRepository<SaleProduct>, SaleProductRepository>();
+                .AddScoped<IRepository<Sale>, SaleRepository>();
         }
 
         public static IServiceCollection AddDomainServices(this IServiceCollection services)
@@ -72,7 +71,7 @@ namespace _123Vendas.Vendas.DependencyInjection
         {
             return services
                 .AddScoped<IValidator<InsertOrUpdateSaleModel>, InsertOrUpdaSaleModelValidator>()
-                .AddScoped<IValidator<InsertOrUpdateSaleProductModel>, InsertOrUpdateSaleProductModelValidator>();
+                .AddScoped<IValidator<InsertUpdateOrDeleteSaleProductModel>, InsertOrUpdateSaleProductModelValidator>();
         }
 
         public static IServiceCollection AddMassTransitForDomainEvents(this IServiceCollection services, IConfiguration configuration)

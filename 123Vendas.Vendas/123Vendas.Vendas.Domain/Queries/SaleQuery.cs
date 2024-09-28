@@ -1,6 +1,6 @@
 ﻿namespace _123Vendas.Vendas.Domain.Queries
 {
-    public class SaleQuery : PageableQuery
+    public class SaleQuery
     {
         public Guid? Id { get; set; }
         public Guid? CompanyId { get; set; }

@@ -1,0 +1,5 @@
+{
+  "ConnectionStrings": {
+    "SalesDb": "Server=127.0.0.1\\mcr.microsoft.com/mssql/server,1433; Database=123vendas; User ID=sa; Password=@P455w0rd$; Integrated Security=False; MultipleActiveResultSets=True; TrustServerCertificate=True"
+  }
+}

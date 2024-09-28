@@ -8,7 +8,7 @@ using System.Net;
 namespace _123Vendas.Vendas.API.Controllers.v1
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("v1/[controller]")]
     public class SalesController : ControllerBase
     {
         private readonly ILogger<SalesController> _logger;
@@ -35,19 +35,46 @@ namespace _123Vendas.Vendas.API.Controllers.v1
         /// <response code="200"> Success - return a list of sales </response>
         /// <response code="500"> Error - return the error that occurs during the process. </response>
         [HttpGet()]        
-        public async Task<IActionResult> Get([FromQuery] SaleQuery? query = null)
+        public async Task<IActionResult> GetAsync([FromQuery] SaleQuery? query = null)
         {
             try
             {
                 var sales = await _salesService.GetAsync(query);
 
-                _logger.LogInformation("get sales");
+                _logger.LogInformation("Sales got!");
 
                 return Ok(sales);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error when trying to get sales");
+
+                return StatusCode(HttpStatusCode.InternalServerError.GetHashCode(), ex);
+            }
+        }
+
+        /// <summary>
+        /// Filter sales based on given query criterias and paginate those results.
+        /// </summary>
+        /// <param name="page"> The number of page. </param>
+        /// <param name="pageSize"> The quantity of items per page </param>
+        /// <returns> The total count of records, the page number and size, and the list of sales and their products. </returns>
+        /// <response code="200"> Success - return a list of sales </response>
+        /// <response code="500"> Error - return the error that occurs during the process. </response>
+        [HttpGet("/{page}/{pageSize}/paginated")]
+        public async Task<IActionResult> GetPaginatedASync(int page, int pageSize, [FromQuery] SaleQuery? query = null)
+        {
+            try
+            {
+                var sales = await _salesService.GetPaginatedAsync(page, pageSize, query);
+
+                _logger.LogInformation("Paginated sales got!");
+
+                return Ok(sales);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error when trying to get sales paginated");
 
                 return StatusCode(HttpStatusCode.InternalServerError.GetHashCode(), ex);
             }
@@ -62,7 +89,7 @@ namespace _123Vendas.Vendas.API.Controllers.v1
         /// <response code="400"> BadRequest - The ID is empty. </response>
         /// <response code="500"> Error - return the error that occurs during the process. </response>
         [HttpGet("id/{id}")]
-        public async Task<IActionResult> GetById(string id)
+        public async Task<IActionResult> GetByIdAsync(string id)
         {
             if (string.IsNullOrEmpty(id) || !Guid.TryParse(id, out Guid uuid))
                 return BadRequest();
@@ -90,7 +117,7 @@ namespace _123Vendas.Vendas.API.Controllers.v1
         /// <response code="400"> BadRequest - There's no information given or some validation error happened. </response>
         /// <response code="500"> Error - return the error that occurs during the process. </response>
         [HttpPost()]
-        public async Task<IActionResult> Post([FromBody] InsertOrUpdateSaleModel? model)
+        public async Task<IActionResult> PostAsync([FromBody] InsertOrUpdateSaleModel? model)
         {
             if (model is null)
                 return BadRequest();
@@ -128,7 +155,7 @@ namespace _123Vendas.Vendas.API.Controllers.v1
         /// <response code="400"> BadRequest - There's no information given or some validation error happened. </response>
         /// <response code="500"> Error - return the error that occurs during the process. </response>
         [HttpPut("{id}")]
-        public async Task<IActionResult> Put(string? id, [FromBody] InsertOrUpdateSaleModel? model)
+        public async Task<IActionResult> PutAsync(string? id, [FromBody] InsertOrUpdateSaleModel? model)
         {
             if (string.IsNullOrEmpty(id) || !Guid.TryParse(id, out Guid uuid))
                 return BadRequest();
@@ -169,7 +196,7 @@ namespace _123Vendas.Vendas.API.Controllers.v1
         /// <response code="400"> BadRequest - There's no information given or some validation error happened. </response>
         /// <response code="500"> Error - return the error that occurs during the process. </response>
         [HttpPut("{id}/cancel")]
-        public async Task<IActionResult> Cancel(string? id)
+        public async Task<IActionResult> CancelAsync(string? id)
         {
             if (string.IsNullOrEmpty(id) || !Guid.TryParse(id, out Guid uuid))
                 return BadRequest();

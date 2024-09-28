@@ -11,7 +11,11 @@
         public decimal Total { get; set; }
 
         public bool? Canceled { get; set; }
+
+        public DateTimeOffset? IncludedAt { get; set; }
+        public DateTimeOffset? UpdatedAt { get; set; }
+        public DateTimeOffset? DeletedAt { get; set; }
         public DateTimeOffset? CanceledAt { get; set; }
-        public Guid? CanceledBy { get; set; }
+
     }
 }

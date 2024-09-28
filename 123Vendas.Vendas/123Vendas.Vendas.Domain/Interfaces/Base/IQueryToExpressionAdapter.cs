@@ -6,6 +6,6 @@ namespace _123Vendas.Vendas.Domain.Interfaces.Base
         where TEntity : class
         where TQuery : class
     {
-        Expression<Func<TEntity, bool>> ToExpression(TQuery query);
+        Expression<Func<TEntity, bool>>? ToExpression(TQuery? query);
     }
 }

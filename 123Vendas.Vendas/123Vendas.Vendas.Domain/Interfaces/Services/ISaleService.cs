@@ -6,6 +6,7 @@ namespace _123Vendas.Vendas.Domain.Interfaces.Services
 {
     public interface ISaleService :
         IDomainGetAsyncService<SaleQuery, SaleModel>,
+        IDomainGetPaginatedAsyncService<SaleQuery, SaleModel>,
         IDomainGetByIdAsyncService<SaleModel>,
         IDomainInsertAsyncService<InsertOrUpdateSaleModel>,
         IDomainUpdateService<InsertOrUpdateSaleModel, SaleModel>,

@@ -15,6 +15,6 @@
         public string SaleCode { get; set; } = "";
         public DateTimeOffset SaleDate { get; set; }
 
-        public IEnumerable<InsertOrUpdateSaleProductModel>? Products { get; set; }
+        public ICollection<InsertUpdateOrDeleteSaleProductModel>? Products { get; set; }
     }
 }

@@ -19,7 +19,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "123Vendas.Vendas.Dependency
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "123Vendas.Vendas.Tests", "123Vendas.Vendas.Tests\123Vendas.Vendas.Tests.csproj", "{721954CA-6B82-4E2D-A4BD-E8AB9F4A30FD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "123Vendas.Vendas.Events", "123Vendas.Vendas.Events\123Vendas.Vendas.Events.csproj", "{DB092C70-5613-453D-9074-AD91346044E4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "123Vendas.Vendas.Events", "123Vendas.Vendas.Events\123Vendas.Vendas.Events.csproj", "{DB092C70-5613-453D-9074-AD91346044E4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{FCEE08D6-B701-40E8-9F52-7101F207BDB2}"
+	ProjectSection(SolutionItems) = preProject
+		sharedsettings.json = sharedsettings.json
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

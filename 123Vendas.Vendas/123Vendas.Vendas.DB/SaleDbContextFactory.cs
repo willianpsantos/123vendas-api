@@ -11,7 +11,7 @@ namespace _123Vendas.Vendas.DB
             var configBuilder = new ConfigurationBuilder();
             var contextBuilder = new DbContextOptionsBuilder<SaleDbContext>();
 
-            var config = configBuilder.AddJsonFile("appsettings.json").Build();
+            var config = configBuilder.AddJsonFile("sharedsettings.json").Build();
             var connectionString = config.GetConnectionString("SalesDb");
 
             contextBuilder.UseSqlServer(connectionString);

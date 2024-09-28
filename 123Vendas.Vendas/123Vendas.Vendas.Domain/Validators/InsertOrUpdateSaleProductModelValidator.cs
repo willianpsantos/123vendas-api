@@ -3,7 +3,7 @@ using FluentValidation;
 
 namespace _123Vendas.Vendas.Domain.Validators
 {
-    public class InsertOrUpdateSaleProductModelValidator : AbstractValidator<InsertOrUpdateSaleProductModel>
+    public class InsertOrUpdateSaleProductModelValidator : AbstractValidator<InsertUpdateOrDeleteSaleProductModel>
     {
         public InsertOrUpdateSaleProductModelValidator()
         {

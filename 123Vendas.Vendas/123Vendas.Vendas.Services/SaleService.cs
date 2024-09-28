@@ -1,4 +1,5 @@
-﻿using _123Vendas.Vendas.Data.Entities;
+﻿using _123Vendas.Vendas.Data.Base;
+using _123Vendas.Vendas.Data.Entities;
 using _123Vendas.Vendas.Domain.Interfaces.Base;
 using _123Vendas.Vendas.Domain.Interfaces.Services;
 using _123Vendas.Vendas.Domain.Models;
@@ -31,14 +32,23 @@ namespace _123Vendas.Vendas.Services
                 SaleDate = entity.SaleDate,
                 SalerId = entity.SalerId,                
 
-                Products = entity?.Products?.Select(_ => new InsertOrUpdateSaleProductModel
+                Products = entity?.Products?.Select(_ => new InsertUpdateOrDeleteSaleProductModel
                 {
                     Id = _.Id != Guid.Empty ? _.Id : null,
                     SaleId = _.SaleId,
+                    ProductId = _.ProductId,
+
                     Amount = _.Amount?.Amount ?? 0,
                     Discount = _.Amount?.Discount ?? 0,
-                    Quantity = _.Amount?.Quantity ?? 0
-                })?.ToArray() ?? Enumerable.Empty<InsertOrUpdateSaleProductModel>()
+                    Quantity = _.Amount?.Quantity ?? 0,
+
+                    IsDeleted = _.IsDeleted,
+
+                    IncludedAt = _.IncludedAt,
+                    UpdatedAt = _.UpdatedAt,
+                    DeletedAt = _.DeletedAt
+                })?
+                .ToHashSet()
             };
 
         private SaleModel _ToListModel(Sale entity) =>
@@ -49,12 +59,16 @@ namespace _123Vendas.Vendas.Services
                 BranchId = entity.BranchId,
                 CompanyId = entity.CompanyId,
                 CustomerId = entity.CustomerId,
+
                 SaleCode = entity.SaleCode,
                 SaleDate = entity.SaleDate,
+                Total = entity.Total,
+
                 Canceled = entity.Canceled,
                 CanceledAt = entity.CanceledAt,
-                CanceledBy = entity.CanceledBy,
-                Total = entity.Total,
+                IncludedAt = entity.IncludedAt,
+                UpdatedAt = entity.UpdatedAt,
+                DeletedAt = entity.DeletedAt,                
 
                 Products = entity?.Products?.Select(_ => new SaleProductModel
                 {
@@ -68,9 +82,13 @@ namespace _123Vendas.Vendas.Services
                     Total = _.Amount?.Total ?? 0,
 
                     Canceled = _.Canceled,
-                    CanceledBy= _.CanceledBy,
-                    CanceledAt = _?.CanceledAt
-                })?.ToArray() ?? Enumerable.Empty<SaleProductModel>()
+
+                    CanceledAt = _.CanceledAt,
+                    IncludedAt = _.IncludedAt,
+                    UpdatedAt = _.UpdatedAt,
+                    DeletedAt = _.DeletedAt
+                })?
+                .ToArray() ?? Enumerable.Empty<SaleProductModel>()
             };
 
         private Sale _ToEntity(SaleModel model) =>
@@ -78,26 +96,35 @@ namespace _123Vendas.Vendas.Services
             {
                 Id = model.Id ?? Guid.Empty,
                 BranchId = model.BranchId,
-                Canceled = model.Canceled,
-                CanceledAt = model.CanceledAt,
-                CanceledBy = model.CanceledBy,
                 CompanyId = model.CompanyId,
                 CustomerId = model.CustomerId,
-                SaleCode = model.SaleCode,
-                SaleDate = model.SaleDate,
                 SalerId = model.SalerId,
-                Total = model.Total,
+
+                Canceled = model.Canceled,
+                CanceledAt = model.CanceledAt,
+                IncludedAt = model.IncludedAt,
+                UpdatedAt = model.UpdatedAt,
+                DeletedAt = model.DeletedAt,
+
+                SaleCode = model.SaleCode,
+                SaleDate = model.SaleDate,                
 
                 Products = model.Products?.Select(_ => new SaleProduct
                 {
-                    Amount = new Data.ValueObjects.ProductAmount(_.Quantity, _.Amount, _.Discount),
-                    Canceled = _.Canceled,
-                    CanceledAt= _.CanceledAt,
-                    CanceledBy= _.CanceledBy,
                     Id = _.Id ?? Guid.Empty,
                     ProductId = _.ProductId,
-                    SaleId = _.SaleId
-                })
+                    SaleId = _.SaleId,
+
+                    Amount = new Data.ValueObjects.ProductAmount(_.Quantity, _.Amount, _.Discount),
+                    
+                    IsDeleted = false,
+                    Canceled = _.Canceled,
+
+                    CanceledAt = _.CanceledAt,
+                    IncludedAt = _.IncludedAt,
+                    UpdatedAt = _.UpdatedAt,
+                    DeletedAt = _.DeletedAt
+                })?
                 .ToHashSet(),
             };
 
@@ -105,23 +132,28 @@ namespace _123Vendas.Vendas.Services
            new Sale
            {
                Id = id ?? Guid.Empty,
-               BranchId = model.BranchId,
-               Canceled = false,
-               IsDeleted = false,
+               BranchId = model.BranchId,               
                CompanyId = model.CompanyId,
                CustomerId = model.CustomerId,
+               SalerId = model.SalerId,
+
                SaleCode = model.SaleCode,
                SaleDate = model.SaleDate,
-               SalerId = model.SalerId,
 
                Products = model.Products?.Select(_ => new SaleProduct
                {
-                   Amount = new Data.ValueObjects.ProductAmount(_.Quantity, _.Amount, _.Discount),
-                   Canceled = false,
-                   IsDeleted = false,
                    Id = _.Id ?? Guid.Empty,
                    ProductId = _.ProductId,
-                   SaleId = _.SaleId
+                   SaleId = _.SaleId,
+
+                   Amount = new Data.ValueObjects.ProductAmount(_.Quantity, _.Amount, _.Discount),                   
+
+                   Canceled = false,
+                   IsDeleted = _.IsDeleted,
+
+                   IncludedAt = _.IncludedAt,
+                   UpdatedAt = _.UpdatedAt,
+                   DeletedAt = _.DeletedAt
                })
                .ToHashSet(),
            };
@@ -137,14 +169,32 @@ namespace _123Vendas.Vendas.Services
 
         public async ValueTask<IEnumerable<SaleModel>> GetAsync(SaleQuery? query = null)
         {
-            var salesQuery = query as SaleQuery;
-            var expression = salesQuery is not null ? _queryAdapter.ToExpression(salesQuery) : null;
+            var expression = _queryAdapter?.ToExpression(query);
             var list = new HashSet<SaleModel>();
 
-            await foreach (var entity in _repository.GetAsync(expression, salesQuery?.PageNumber ?? 0, salesQuery?.PageSize ?? 0))
+            await foreach (var entity in _repository.GetAsync(expression))
                 list.Add(_ToListModel(entity));
 
-            return list.ToArray();
+            return list;
+        }
+
+        public async ValueTask<IPaginatedResultModel<SaleModel>> GetPaginatedAsync(int page, int pageSize, SaleQuery? query = null)
+        {
+            var expression = _queryAdapter?.ToExpression(query);
+            var list = new HashSet<SaleModel>();
+
+            await foreach (var entity in _repository.GetAsync(expression, page, pageSize))
+                list.Add(_ToListModel(entity));
+
+            var count = await _repository.CountAsync(expression);
+
+            return new PaginatedResultModel<SaleModel>
+            {
+                Count = count,
+                PageSize = pageSize,
+                PageNumber = page,
+                Data = list
+            };
         }
 
         public async ValueTask<SaleModel?> GetByIdAsync(Guid id)

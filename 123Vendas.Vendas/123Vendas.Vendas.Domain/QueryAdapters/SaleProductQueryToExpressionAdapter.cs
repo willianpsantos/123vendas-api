@@ -3,12 +3,15 @@ using _123Vendas.Vendas.Domain.Interfaces.Base;
 using _123Vendas.Vendas.Domain.Queries;
 using System.Linq.Expressions;
 
-namespace _123Vendas.Vendas.Domain.Adapters
+namespace _123Vendas.Vendas.Domain.QueryAdapters
 {
     public class SaleProductQueryToExpressionAdapter : IQueryToExpressionAdapter<SaleProductQuery, SaleProduct>
     {
-        public Expression<Func<SaleProduct, bool>> ToExpression(SaleProductQuery query)
+        public Expression<Func<SaleProduct, bool>>? ToExpression(SaleProductQuery? query)
         {
+            if (query is null)
+                return null;
+
             Expression<Func<SaleProduct, bool>> expr =
                 _ => (query.SaleId == null || _.SaleId == query.SaleId) &&
                      (query.ProductId == null || _.ProductId == query.ProductId) &&

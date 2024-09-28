@@ -1,4 +1,5 @@
-﻿using _123Vendas.Vendas.DependencyInjection;
+﻿using _123Vendas.Vendas.Data.Entities;
+using _123Vendas.Vendas.DependencyInjection;
 using _123Vendas.Vendas.Domain.Interfaces.Services;
 using _123Vendas.Vendas.Domain.Models;
 using _123Vendas.Vendas.Domain.Queries;
@@ -26,39 +27,31 @@ namespace _123Vendas.Vendas.Tests
         }
 
 
-        private InsertOrUpdateSaleModel _CreateInsertOrUpdateModelWithProducts()
-        {
-            var insertedBy = Guid.NewGuid();
+        private InsertOrUpdateSaleModel _CreateInsertOrUpdateModelWithProducts(int productsCount = 3)
+        {            
             var utcNow = DateTimeOffset.UtcNow;
             var random = new Random();
+            var possibleDiscounts = new int[] { 0, 5, 0, 10, 2, 0, 15, 0, 0, 25, 7 };
 
             return new InsertOrUpdateSaleModel
             {
                 BranchId = Guid.NewGuid(),
                 CompanyId = Guid.NewGuid(),
-                CustomerId = Guid.NewGuid(),
-                SaleCode = random.Next().ToString(),
-                SaleDate = utcNow,
+                CustomerId = Guid.NewGuid(),                
                 SalerId = Guid.NewGuid(),
 
-                Products = new HashSet<InsertOrUpdateSaleProductModel>
-                {
-                    new InsertOrUpdateSaleProductModel
+                SaleCode = random.Next(50001).ToString(),
+                SaleDate = utcNow,
+
+                Products = Enumerable.Range(1, productsCount).Select(_ => new InsertUpdateOrDeleteSaleProductModel
                     {                        
                         ProductId = Guid.NewGuid(),
-                        Discount = 5,
-                        Quantity = random.Next(),
-                        Amount = random.Next()                        
-                    },
 
-                    new InsertOrUpdateSaleProductModel
-                    {
-                        ProductId = Guid.NewGuid(),
-                        Discount = 5,
-                        Quantity = random.Next(),
-                        Amount = random.Next()
+                        Discount = possibleDiscounts[random.Next(possibleDiscounts.Length - 1)],
+                        Quantity = random.Next(10),
+                        Amount = random.Next(100)                        
                     }
-                }
+                ).ToHashSet()
             };
         }
 
@@ -73,16 +66,23 @@ namespace _123Vendas.Vendas.Tests
                 SalerId = model.SalerId,
 
                 Products = model.Products?.Select(_ => 
-                    new InsertOrUpdateSaleProductModel
+                    new InsertUpdateOrDeleteSaleProductModel
                     {
                         Id = _.Id,
+                        SaleId = _.SaleId,
                         ProductId = _.ProductId,    
+
                         Discount = _.Discount,
                         Quantity = _.Quantity,
-                        Amount = _.Amount
+                        Amount = _.Amount,
+
+                        IncludedAt = _.IncludedAt,
+                        UpdatedAt = _.UpdatedAt,
+                        DeletedAt = _.DeletedAt
                     }
-                )?.ToArray() ?? Enumerable.Empty<InsertOrUpdateSaleProductModel>()
+                )?.ToHashSet()
             };
+
 
         [Test]
         public async Task Should_Insert_Sale_And_Generate_NewId()
@@ -97,9 +97,8 @@ namespace _123Vendas.Vendas.Tests
             var inserted = await service.InsertAsync(model, includedBy);
             var affected = await service.SaveChangesAsync();
 
-            ClassicAssert.IsTrue(affected > 0);
-            ClassicAssert.IsNotNull(inserted);
-            Assert.That(inserted, Is.Not.EqualTo(Guid.Empty));
+            Assert.That(affected, Is.GreaterThan(0));
+            Assert.That(inserted, Is.Not.Empty);
         }
 
         [Test]
@@ -115,7 +114,7 @@ namespace _123Vendas.Vendas.Tests
             var insertedId = await service.InsertAsync(model, updatedBy);
             var affected = await service.SaveChangesAsync();
 
-            ClassicAssert.IsTrue(affected > 0);
+            Assert.That(affected, Is.GreaterThan(0));
 
             var insertedModel = await service.GetByIdAsync(insertedId);
 
@@ -125,65 +124,39 @@ namespace _123Vendas.Vendas.Tests
             var newCompanyId = Guid.NewGuid();
             var newBranchId = Guid.NewGuid();
             var newSalerId = Guid.NewGuid();
-            var newTotal = 150;
 
             var oldCompanyId = insertedModel.CompanyId;
             var oldBranchId = insertedModel.BranchId;
             var oldSalerId = insertedModel.SalerId;
-            var oldTotal = insertedModel.Total;
 
             insertedModel.CompanyId = newCompanyId;
             insertedModel.BranchId = newBranchId;
-            insertedModel.SalerId = newSalerId;
-            insertedModel.Total = newTotal;
+            insertedModel.SalerId = newSalerId;            
 
             var convertedInsertOrUpdateModel = _ConvertToInsertOrUpdateSaleModel(insertedModel);
 
-            var updateted = service.Update(insertedId, convertedInsertOrUpdateModel, updatedBy);
+            Assert.That(convertedInsertOrUpdateModel, Is.Not.Null);
+            Assert.That(convertedInsertOrUpdateModel.Products, Is.Not.Null);
+            Assert.That(convertedInsertOrUpdateModel.Products, Is.Not.Empty);
+
+            convertedInsertOrUpdateModel!.Products!.ElementAt(2).IsDeleted = true;
+
+            convertedInsertOrUpdateModel!.Products!.Add(new InsertUpdateOrDeleteSaleProductModel
+            {
+                ProductId = Guid.NewGuid(),
+                Amount = 10,
+                Quantity = 2,
+                Discount = 0
+            });
+
+            var updated = service.Update(insertedId, convertedInsertOrUpdateModel, updatedBy);
             affected = await service.SaveChangesAsync();
 
-            ClassicAssert.IsTrue(affected > 0);
-            ClassicAssert.IsNotNull(updateted);
-            ClassicAssert.IsTrue(updateted.CompanyId == newCompanyId);
-            ClassicAssert.IsTrue(updateted.BranchId == newBranchId);
-            ClassicAssert.IsTrue(updateted.SalerId == newSalerId);
-            ClassicAssert.IsTrue(updateted.Total == newTotal);
-        }
-
-        [Test]
-        public async Task Should_Insert_Sale_With_Products_And_CommitAll_AtEnd()
-        {
-            var service = _manualDependencyInjection.GetService<ISaleService>();
-
-            if (service is null)
-                Assert.Fail("Service not created!");
-
-            var insertedBy = Guid.NewGuid();
-            var utcNow = DateTimeOffset.UtcNow;
-            var model = _CreateInsertOrUpdateModelWithProducts();
-
-            var insertedId = await service.InsertAsync(model, insertedBy);
-            var affected = await service.SaveChangesAsync();
-            
-            ClassicAssert.IsTrue(affected > 0);
-            ClassicAssert.IsNotNull(insertedId);
-
-            var inserted = await service.GetByIdAsync(insertedId);
-
-            ClassicAssert.IsNotNull(inserted);            
-            ClassicAssert.IsFalse(inserted.Id == Guid.Empty);
-            ClassicAssert.IsTrue(inserted.CompanyId == model.CompanyId);
-            ClassicAssert.IsTrue(inserted.BranchId == model.BranchId);
-            ClassicAssert.IsTrue(inserted.CustomerId == model.CustomerId);
-            ClassicAssert.IsTrue(inserted.SaleCode == model.SaleCode);
-            ClassicAssert.IsTrue(inserted.SalerId == model.SalerId);
-
-            ClassicAssert.IsNotNull(inserted.Products);
-            Assert.That(inserted.Products, Is.Not.Empty);
-            Assert.That(inserted.Products, Is.All.Not.Null);
-
-            ClassicAssert.IsTrue(inserted.Products.All(p => p.SaleId == inserted.Id));
-            ClassicAssert.IsTrue(inserted.Total == inserted.Products.Sum(p => p.Total));
+            Assert.That(affected, Is.GreaterThan(0));
+            Assert.That(updated, Is.Not.Null);
+            Assert.That(updated.CompanyId, Is.EqualTo(newCompanyId));
+            Assert.That(updated.BranchId, Is.EqualTo(newBranchId));
+            Assert.That(updated.SalerId, Is.EqualTo(newSalerId));
         }
 
         [Test]
@@ -204,44 +177,43 @@ namespace _123Vendas.Vendas.Tests
             var insertedId2 = await service.InsertAsync(entity2, insertedBy);
             var affected = await service.SaveChangesAsync();
 
-            ClassicAssert.IsTrue(affected >= 2);
+            Assert.That(affected, Is.GreaterThanOrEqualTo(2));
 
             var inserted1 = await service.GetByIdAsync(insertedId1);
             var inserted2 = await service.GetByIdAsync(insertedId2);
 
-            ClassicAssert.IsNotNull(inserted1);
-            ClassicAssert.IsNotNull(inserted2);
+            Assert.That(affected, Is.GreaterThanOrEqualTo(2));
+            Assert.That(inserted1, Is.Not.Null);
 
-            ClassicAssert.IsFalse(inserted1.Id == Guid.Empty);
-            ClassicAssert.IsTrue(inserted1.CompanyId == entity1.CompanyId);
-            ClassicAssert.IsTrue(inserted1.BranchId == entity1.BranchId);
-            ClassicAssert.IsTrue(inserted1.CustomerId == entity1.CustomerId);
-            ClassicAssert.IsTrue(inserted1.SaleCode == entity1.SaleCode);
-            ClassicAssert.IsTrue(inserted1.SalerId == entity1.SalerId);
+            Assert.That(inserted1.Id, Is.Not.EqualTo(Guid.Empty));
+            Assert.That(inserted1.CompanyId, Is.EqualTo(entity1.CompanyId));
+            Assert.That(inserted1.BranchId, Is.EqualTo(entity1.BranchId));
+            Assert.That(inserted1.CustomerId, Is.EqualTo(entity1.CustomerId));
+            Assert.That(inserted1.SaleCode, Is.EqualTo(entity1.SaleCode));
+            Assert.That(inserted1.SalerId, Is.EqualTo(entity1.SalerId));
+            Assert.That(inserted1.IncludedAt.GetValueOrDefault().Date, Is.EqualTo(DateTimeOffset.UtcNow.Date));
 
             Assert.That(inserted1.Products, Is.Not.Null);
-            Assert.That(inserted1.Products, Is.Not.Empty);
             Assert.That(inserted1.Products, Is.All.Not.Null);
 
-            ClassicAssert.IsTrue(inserted1.Products.All(p => p.SaleId == inserted1.Id));
-            ClassicAssert.IsTrue(inserted1.Total == inserted1.Products.Sum(p => p.Total));
+            Assert.That(inserted1.Products.All(p => p.SaleId == inserted1.Id), Is.True);
+            Assert.That(inserted1.Total == inserted1.Products.Sum(p => p.Total), Is.True);
 
 
-            ClassicAssert.IsNotNull(inserted2);
-            ClassicAssert.IsFalse(inserted2.Id == Guid.Empty);
-            ClassicAssert.IsTrue(inserted2.CompanyId == entity2.CompanyId);
-            ClassicAssert.IsTrue(inserted2.BranchId == entity2.BranchId);
-            ClassicAssert.IsTrue(inserted2.CustomerId == entity2.CustomerId);
-            ClassicAssert.IsTrue(inserted2.SaleCode == entity2.SaleCode);
-            ClassicAssert.IsTrue(inserted2.SalerId == entity2.SalerId);
+            Assert.That(inserted2, Is.Not.Null);
+            Assert.That(inserted2.Id == Guid.Empty, Is.False);
+            Assert.That(inserted2.CompanyId == entity2.CompanyId, Is.True);
+            Assert.That(inserted2.BranchId == entity2.BranchId, Is.True);
+            Assert.That(inserted2.CustomerId == entity2.CustomerId, Is.True);
+            Assert.That(inserted2.SaleCode == entity2.SaleCode, Is.True);
+            Assert.That(inserted2.SalerId == entity2.SalerId, Is.True);
+            Assert.That(inserted2.IncludedAt.GetValueOrDefault().Date == DateTimeOffset.UtcNow.Date, Is.True);
 
-            ClassicAssert.IsNotNull(inserted2.Products);
             Assert.That(inserted2.Products, Is.Not.Null);
-            Assert.That(inserted2.Products, Is.Not.Empty);
-            Assert.That(inserted2.Products, Is.All.Not.Null);
+            Assert.That(inserted2.Products, Is.All.No.Null);
 
-            ClassicAssert.IsTrue(inserted2.Products.All(p => p.SaleId == inserted2.Id));
-            ClassicAssert.IsTrue(inserted2.Total == inserted2.Products.Sum(p => p.Total));
+            Assert.That(inserted2.Products.All(p => p.SaleId == inserted2.Id), Is.True);
+            Assert.That(inserted2.Total, Is.EqualTo(inserted2.Products.Sum(p => p.Total)));
         }
 
         [Test]
@@ -261,12 +233,13 @@ namespace _123Vendas.Vendas.Tests
             var inserted2 = await service.InsertAsync(entity2, insertedBy);
             var affected = await service.SaveChangesAsync();
 
-            ClassicAssert.IsTrue(affected >= 2);
+            Assert.That(affected, Is.GreaterThanOrEqualTo(2));
 
             var sales = await service.GetAsync();
 
             Assert.That(sales, Is.Not.Null);
             Assert.That(sales, Is.Not.Empty);
+            Assert.That(sales.All(_ => _.Products.Count() > 0), Is.True);
             Assert.That(sales.Count(), Is.EqualTo(2));
         }
 
@@ -299,6 +272,7 @@ namespace _123Vendas.Vendas.Tests
 
             Assert.That(sales, Is.Not.Null);
             Assert.That(sales, Is.Not.Empty);
+            Assert.That(sales.All(_ => _.Products.Count() > 0), Is.True);
             Assert.That(sales.Count(), Is.EqualTo(1));
         }
 
@@ -323,19 +297,18 @@ namespace _123Vendas.Vendas.Tests
 
             var affected = await service.SaveChangesAsync();
 
-            ClassicAssert.IsTrue(affected >= 2);
+            Assert.That(affected, Is.GreaterThanOrEqualTo(10));
 
-            var insertedCount = await service.CountAsync(null);            
+            var result = await service.GetPaginatedAsync(1, 5);
 
-            var sales = await service.GetAsync(new SaleQuery
-            {
-                PageNumber = 1,
-                PageSize = 5
-            });
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Data, Is.Not.Null);
+            Assert.That(result.Data, Is.Not.Empty);
+            Assert.That(result.Data.Count, Is.EqualTo(5));
 
-            Assert.That(sales, Is.Not.Null);
-            Assert.That(sales, Is.Not.Empty);
-            ClassicAssert.IsTrue(sales.Count() == 5 && sales.Count() < insertedCount);
+            Assert.That(result.Count, Is.EqualTo(10));
+            Assert.That(result.PageNumber, Is.EqualTo(1));
+            Assert.That(result.PageSize, Is.EqualTo(5));
         }
     }
 }

@@ -1,10 +1,18 @@
 using _123Vendas.Vendas.DependencyInjection;
+using _123Vendas.Vendas.Domain;
 using Serilog;
 using Serilog.Events;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+string parentPath =
+    Directory.GetParent(
+        Directory.GetCurrentDirectory()
+    )?.FullName ?? "";
+
+var sharedSettingsPath = $"{parentPath}/{ApplicationConstants.SharedSettingsFileName}";
+
+builder.Configuration.AddJsonFile(sharedSettingsPath);
 builder.Services.AddControllers();
 
 builder
@@ -18,7 +26,8 @@ builder
     .AddMassTransitForDomainEvents(builder.Configuration);
 
 Log.Logger = new LoggerConfiguration()
-    .ReadFrom.Configuration(builder.Configuration)
+    .ReadFrom
+    .Configuration(builder.Configuration)
     .CreateLogger();
 
 builder.Services.AddSerilog(Log.Logger);
