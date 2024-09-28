@@ -48,7 +48,7 @@ namespace _123Vendas.Vendas.Repositories
                 .Sales
                 .Include(_ => _.Products!.Where(p => !p.IsDeleted))
                 .AsNoTracking()
-                .FirstOrDefaultAsync(_ => _.Id == id);
+                .FirstOrDefaultAsync(_ => _.Id == id && !_.IsDeleted);
 
         public async ValueTask<Sale> InsertAsync(Sale entity, Guid insertedBy)
         {

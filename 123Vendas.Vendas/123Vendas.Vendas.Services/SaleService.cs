@@ -161,9 +161,7 @@ namespace _123Vendas.Vendas.Services
 
         public async ValueTask<int> CountAsync(SaleQuery? query = null)
         {
-            var salesQuery = query as SaleQuery;
-            var expression = salesQuery is not null ? _queryAdapter.ToExpression(salesQuery) : null;
-            
+            var expression = _queryAdapter?.ToExpression(query);            
             return await _repository.CountAsync(expression);
         }
 
